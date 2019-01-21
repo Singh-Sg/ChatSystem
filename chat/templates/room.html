@@ -1,4 +1,4 @@
-<!-- chat/templates/chat/room.html -->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,9 +6,14 @@
     <title>Chat Room</title>
 </head>
 <body>
-    <textarea id="chat-log" cols="100" rows="20"></textarea><br/>
-    <input id="chat-message-input" type="text" size="100"/><br/>
-    <input id="chat-message-submit" type="button" value="Send"/>
+    <div><div align="center" style="color:blue; font-weight:bold; font-size:40px; width: 200px">My Status 
+        <p id="chat-log" style="color:red;"></p>
+    </div>
+    <div align="left" style="color:black; font-weight:bold; font-size:20px;">
+    If no activity (mouse move, click etc) using Django channel
+    <li>After 10 sec inactive</li>
+    <li>After 20 sec offline </li> 
+    </div>
 </body>
 <script>
     var roomName = {{ room_name_json }};
@@ -20,28 +25,65 @@
     chatSocket.onmessage = function(e) {
         var data = JSON.parse(e.data);
         var message = data['message'];
-        document.querySelector('#chat-log').value += (message + '\n');
+        document.getElementById("chat-log").innerHTML=message;
     };
 
     chatSocket.onclose = function(e) {
         console.error('Chat socket closed unexpectedly');
     };
 
-    document.querySelector('#chat-message-input').focus();
-    document.querySelector('#chat-message-input').onkeyup = function(e) {
-        if (e.keyCode === 13) {  // enter, return
-            document.querySelector('#chat-message-submit').click();
-        }
-    };
 
-    document.querySelector('#chat-message-submit').onclick = function(e) {
-        var messageInputDom = document.querySelector('#chat-message-input');
-        var message = messageInputDom.value;
+    var timeoutID;
+    var timeoutID1;
+
+     
+    function setup() {
+        this.addEventListener("mousemove", resetTimer, false);
+        this.addEventListener("mousedown", resetTimer, false);
+        this.addEventListener("keypress", resetTimer, false);
+        this.addEventListener("DOMMouseScroll", resetTimer, false);
+        this.addEventListener("mousewheel", resetTimer, false);
+        this.addEventListener("touchmove", resetTimer, false);
+        this.addEventListener("MSPointerMove", resetTimer, false);
+     
+        startTimer();
+    }
+    setup();
+     
+    function startTimer() {
+        // wait 10 seconds before calling goInactive
+        timeoutID = window.setTimeout(goInactive, 10000);
+        // wait 20 seconds before calling goInactive
+        timeoutID1 = window.setTimeout(goOffline, 20000);
+    }
+     
+    function resetTimer(e) {
+        window.clearTimeout(timeoutID);
+        window.clearTimeout(timeoutID1);
+        
+        goActive();
+    }
+     
+    function goInactive() {
+        console.log('inactive')
         chatSocket.send(JSON.stringify({
-            'message': message
-        }));
+                'message': 'Inactive'
+            }));
+    }
 
-        messageInputDom.value = '';
-    };
+    function goOffline() {
+        console.log('offline now')
+        chatSocket.send(JSON.stringify({
+                'message': 'Offline now'
+        }));
+    }
+     
+    function goActive() {
+        console.log('active')       
+        startTimer();
+        chatSocket.send(JSON.stringify({
+                'message': 'Active'
+        }));
+    }
 </script>
 </html>
