@@ -6,10 +6,17 @@
     <title>Chat Room</title>
 </head>
 <body>
-    <div><div align="center" style="color:blue; font-weight:bold; font-size:40px; width: 200px">My Status 
-        <p id="chat-log" style="color:red;"></p>
-    </div>
-    <div align="left" style="color:black; font-weight:bold; font-size:20px;">
+    <div>
+        <div align="center" style="color:blue; font-weight:bold; font-size:24px; width: 200px">Users Status</div>
+        <br>
+            {% for user in users %}
+            <li >{{ user }}:
+                <span id="{{ user.id }}" style="color:red;"></span>
+            </li>
+            {% endfor %}
+        
+    <br>
+    <div align="left" style="color:black; font-weight:bold; font-size:16px;">
     If no activity (mouse move, click etc) using Django channel
     <li>After 10 sec inactive</li>
     <li>After 20 sec offline </li> 
@@ -17,6 +24,7 @@
 </body>
 <script>
     var roomName = {{ room_name_json }};
+    var login_user = {{ login_user.id }};
 
     var chatSocket = new WebSocket(
         'ws://' + window.location.host +
@@ -25,7 +33,9 @@
     chatSocket.onmessage = function(e) {
         var data = JSON.parse(e.data);
         var message = data['message'];
-        document.getElementById("chat-log").innerHTML=message;
+        var user = data['user'];
+
+        document.getElementById(user).innerHTML=message;
     };
 
     chatSocket.onclose = function(e) {
@@ -67,14 +77,16 @@
     function goInactive() {
         console.log('inactive')
         chatSocket.send(JSON.stringify({
-                'message': 'Inactive'
+                'message': 'Inactive',
+                'user': login_user,
             }));
     }
 
     function goOffline() {
         console.log('offline now')
         chatSocket.send(JSON.stringify({
-                'message': 'Offline now'
+                'message': 'Offline now',
+                'user': login_user
         }));
     }
      
@@ -82,7 +94,8 @@
         console.log('active')       
         startTimer();
         chatSocket.send(JSON.stringify({
-                'message': 'Active'
+                'message': 'Active',
+                'user': login_user
         }));
     }
 </script>
